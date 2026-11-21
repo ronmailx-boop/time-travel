@@ -1,0 +1,12 @@
+# Videos and generated media are never committed
+input/*
+!input/.gitkeep
+output/*
+!output/.gitkeep
+*.mp4
+*.mov
+*.webm
+*.mkv
+*.avi
+.env
+node_modules/
