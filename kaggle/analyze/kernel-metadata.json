@@ -1,0 +1,10 @@
+{
+  "id": "vplusstudio/time-travel-analyze",
+  "title": "time-travel-analyze",
+  "code_file": "analyze.py",
+  "language": "python",
+  "kernel_type": "script",
+  "is_private": true,
+  "enable_gpu": false,
+  "enable_internet": true
+}
