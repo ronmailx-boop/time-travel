@@ -78,6 +78,8 @@ body { background: var(--night); color: var(--ink); font-family: var(--font-body
     <button id="play" type="button">השהיה</button>
     <button id="follow" type="button" aria-pressed="true">עקוב אחרי המצלמה</button>
     <button id="center" type="button">לסרטון</button>
+    <button id="snap" type="button">צילום מסך</button>
+    <button id="rec" type="button" aria-pressed="false">הקלטה</button>
     <span class="time" id="time">0:00 / 0:00</span>
   </div>
 </div>
@@ -94,7 +96,7 @@ body { background: var(--night); color: var(--ink); font-family: var(--font-body
   if (!window.THREE) { fail('לא הצלחתי לטעון את מנוע התלת-ממד. בדוק את החיבור ונסה לרענן.'); return; }
 
   const stage = document.getElementById('stage');
-  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   stage.appendChild(renderer.domElement);
   const scene = new THREE.Scene();
@@ -210,6 +212,29 @@ body { background: var(--night); color: var(--ink); font-family: var(--font-body
     goBtn.disabled = false; goBtn.textContent = 'להיכנס לרגע';
     requestAnimationFrame(frame);
   }).catch(() => fail('חלק מהקבצים לא נטענו. נסה לרענן את הדף.'));
+
+  // Capture what the viewer sees: a PNG snapshot, or a WebM recording of the view (with the clip's sound)
+  const stamp = () => new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+  function save(blob, name) {
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+  }
+  document.getElementById('snap').addEventListener('click', () => {
+    renderer.domElement.toBlob((b) => { if (b) save(b, `time-travel-${stamp()}.png`); }, 'image/png');
+  });
+  const recBtn = document.getElementById('rec'); let rec = null, chunks = [];
+  recBtn.addEventListener('click', () => {
+    if (rec) { rec.stop(); return; }
+    if (!window.MediaRecorder || !renderer.domElement.captureStream) { recBtn.textContent = 'לא נתמך'; return; }
+    const stream = renderer.domElement.captureStream(30);
+    try { const a = (vid.captureStream || vid.mozCaptureStream).call(vid).getAudioTracks()[0]; if (a) stream.addTrack(a); } catch (e) {}
+    const type = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'].find((t) => MediaRecorder.isTypeSupported(t)) || '';
+    chunks = []; rec = new MediaRecorder(stream, type ? { mimeType: type, videoBitsPerSecond: 6e6 } : undefined);
+    rec.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
+    rec.onstop = () => { save(new Blob(chunks, { type: 'video/webm' }), `time-travel-${stamp()}.webm`); rec = null;
+      recBtn.textContent = 'הקלטה'; recBtn.setAttribute('aria-pressed', 'false'); };
+    rec.start(500); recBtn.textContent = 'עצור והורד'; recBtn.setAttribute('aria-pressed', 'true');
+  });
 
   const playBtn = document.getElementById('play');
   goBtn.addEventListener('click', () => {
