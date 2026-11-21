@@ -13,7 +13,8 @@
   --font-body: "Assistant", "Arial Hebrew", system-ui, sans-serif;
   color-scheme: dark;
 }
-html, body { height: 100%; }
+[hidden] { display: none !important; }
+html, body { height: 100%; margin: 0; }
 body { background: var(--night); color: var(--ink); font-family: var(--font-body); overflow: hidden; direction: rtl; }
 #stage { position: fixed; inset: 0; touch-action: none; cursor: grab; }
 #stage:active { cursor: grabbing; }
